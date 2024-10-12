@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBC Game - Vaibhav</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>KBC-Style Quiz Game</h1>
+        <div class="question">Waiting for question...</div>
+        <div class="qr-code" id="qrcode"></div>
+        <div class="answer"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        
+        fetch('/qrcode')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('qrcode').innerHTML = html;  
+            })
+            .catch(error => {
+                console.error('Error fetching QR code:', error);
+            });
+
+        
+            socket.on('newQuestion', (data) => {
+            document.querySelector('.question').innerHTML = `Question: ${data.question}`;
+            
+            const optionsHtml = data.options.map(option => `<button class="option">${option}</button>`).join('');
+            document.querySelector('.question').innerHTML += `<div class="options">${optionsHtml}</div>`;
+           
+            document.querySelector('.answer').innerHTML = '';
+        });
+
+        
+        socket.on('answerFeedback', (data) => {
+            document.querySelector('.answer').innerHTML = data.message;
+        });
+
+        
+        socket.on('congratulations', (data) => {
+            const congratsMessage = `${data.playerName}, congratulations on the correct answer!`;
+            document.querySelector('.answer').innerHTML += `<div class="congrats">${congratsMessage}</div>`;
+        });
+
+        
+        socket.on('gameOver', (data) => {
+            alert(data.message);
+            document.querySelector('.options').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
