@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBC Game - Vaibhav</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>KBC Game - Player</h1>
+        <div id="question">Waiting for question...</div>
+        <div class="input-field">
+            <input type="text" id="playerName" placeholder="Enter your name" />
+        </div>
+        <div class="input-field">
+            <select id="answer">
+                <option value="">Select your answer</option>
+            </select>
+        </div>
+        <button class="button" id="submit">Submit Answer</button>
+        <div id="feedback" style="margin-top: 20px;"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const playerNameInput = document.getElementById('playerName');
+        const answerSelect = document.getElementById('answer');
+
+        
+        const playerName = prompt("Please enter your name") || "Player";
+        playerNameInput.value = playerName;
+
+        
+        socket.emit('joinGame', { playerName });
+
+        
+        socket.on('newQuestion', (data) => {
+            document.getElementById('question').innerText = `Question: ${data.question}`;
+            const options = data.options.map((option) => {
+                return `<option value="${option}">${option}</option>`;
+            }).join('');
+            answerSelect.innerHTML = `<option value="">Select your answer</option>${options}`;
+        });
+
+        
+        document.getElementById('submit').addEventListener('click', () => {
+            const answer = answerSelect.value;
+            if (answer) {
+                socket.emit('submitAnswer', {
+                    playerName,
+                    chosenOption: answer
+                });
+                answerSelect.value = ''; 
+            } else {
+                alert('Please select an answer.');
+            }
+        });
+
+       
+        socket.on('answerFeedback', (data) => {
+            document.getElementById('feedback').innerText = data.message;
+        });
+
+        
+        socket.on('gameOver', (data) => {
+            alert(data.message);
+            document.getElementById('feedback').innerText = '';
+        });
+    </script>
+</body>
+</html>
